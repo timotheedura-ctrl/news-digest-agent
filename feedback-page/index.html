@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rate Today's Digest</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; color: #0f172a; padding: 20px; line-height: 1.5; }
+    .container { max-width: 620px; margin: 0 auto; }
+    .header { background: #0f172a; color: #fff; padding: 24px 28px; border-radius: 10px 10px 0 0; }
+    .header p { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #475569; font-weight: 700; }
+    .header h1 { font-size: 22px; margin-top: 6px; }
+    .body { background: #fff; padding: 20px 28px; border-radius: 0 0 10px 10px; }
+    .story { padding: 14px 0; border-bottom: 1px solid #f1f5f9; }
+    .story-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+    .country-tag { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #3b82f6; margin-bottom: 4px; }
+    .buttons { display: flex; gap: 8px; }
+    .btn { border: 1px solid #e2e8f0; background: #fff; border-radius: 6px; padding: 6px 14px; font-size: 13px; cursor: pointer; transition: all 0.15s; }
+    .btn:hover { background: #f8fafc; }
+    .btn.active-up { background: #f0fdf4; border-color: #22c55e; color: #16a34a; }
+    .btn.active-down { background: #fef2f2; border-color: #ef4444; color: #dc2626; }
+    .btn.active-vague { background: #fffbeb; border-color: #f59e0b; color: #d97706; }
+    .loading, .empty { text-align: center; padding: 40px 20px; color: #94a3b8; }
+    .saved-note { font-size: 11px; color: #22c55e; margin-top: 6px; height: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <p>SADC Fintech Intelligence</p>
+      <h1>Rate Today's Digest</h1>
+    </div>
+    <div class="body" id="content">
+      <div class="loading">Loading today's stories…</div>
+    </div>
+  </div>
+  <script>
+    const SUPABASE_URL = 'https://omrpframhlocywynemtz.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tcnBmcmFtaGxvY3l3eW5lbXR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzMwODgsImV4cCI6MjA5NTU0OTA4OH0.AdBBeo8HLr8a11EaafhX2Odb2fNP3PTQVw2eTI6zY7o';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const content = document.getElementById('content');
+
+    async function loadStories() {
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase.from('sent_articles').select('*').eq('sent_date', today).order('id', { ascending: true });
+      if (error) { content.innerHTML = '<div class="empty">Could not load stories. ' + error.message + '</div>'; return; }
+      if (!data || data.length === 0) { content.innerHTML = '<div class="empty">No stories found for today yet. Check back after the morning digest.</div>'; return; }
+      content.innerHTML = data.map(story => `
+        <div class="story" data-id="${story.id}">
+          ${story.country ? `<div class="country-tag">${story.country}</div>` : ''}
+          <div class="story-title">${story.title}</div>
+          <div class="buttons">
+            <button class="btn" onclick="rate(this, ${story.id}, '${escapeAttr(story.title)}', '${escapeAttr(story.country || '')}', 'up')">👍 Useful</button>
+            <button class="btn" onclick="rate(this, ${story.id}, '${escapeAttr(story.title)}', '${escapeAttr(story.country || '')}', 'down')">👎 Skip</button>
+            <button class="btn" onclick="flagVague(this, ${story.id}, '${escapeAttr(story.title)}', '${escapeAttr(story.country || '')}')">😐 Too vague</button>
+          </div>
+          <div class="saved-note" id="note-${story.id}"></div>
+        </div>
+      `).join('');
+    }
+
+    function escapeAttr(str) { return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+
+    async function rate(btn, id, title, country, rating) {
+      const group = btn.parentElement;
+      group.querySelectorAll('.btn').forEach(b => b.classList.remove('active-up', 'active-down'));
+      btn.classList.add(rating === 'up' ? 'active-up' : 'active-down');
+      const { error } = await supabase.from('feedback').insert({ title, country, rating, too_vague: false });
+      document.getElementById('note-' + id).textContent = error ? '⚠️ ' + error.message : '✓ Saved';
+    }
+
+    async function flagVague(btn, id, title, country) {
+      btn.classList.toggle('active-vague');
+      const { error } = await supabase.from('feedback').insert({ title, country, rating: null, too_vague: true });
+      document.getElementById('note-' + id).textContent = error ? '⚠️ ' + error.message : '✓ Flagged';
+    }
+
+    loadStories();
+  </script>
+</body>
+</html>
