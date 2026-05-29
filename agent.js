@@ -55,7 +55,6 @@ function deduplicateArticles(articles) {
   const result = [];
 
   for (const article of articles) {
-    // Normalise: lowercase, remove punctuation, keep first 6 words as fingerprint
     const fingerprint = article.title
       .toLowerCase()
       .replace(/[^a-z0-9 ]/g, '')
@@ -204,28 +203,32 @@ async function runAgent() {
     max_tokens: 6000,
     messages: [{
       role: 'user',
-      content: `You are a news monitoring agent for a senior fintech professional working across the SADC region.
+      content: `You are a news monitoring agent for a senior fintech professional (Head of Merchant Payments) working across the SADC region. They want sharp, specific, decision-useful intelligence - not generic summaries.
 
 Here are recent articles (last 24 hours only):
 ${articlesToText(articles)}
 
-Instructions:
-- Select exactly 5 stories for Section 1 and exactly 5 stories for Section 2. Total: 10 stories, no duplicates.
-- Each story must be DIFFERENT. Do not repeat any story, URL, or company.
-- If two articles are about the same company or event, pick only one.
+SELECTION RULES:
+- Select exactly 5 stories for Section 1 and exactly 5 stories for Section 2. Total: 10, no duplicates.
+- Some articles describe the SAME real-world event with different headlines (e.g. one names the company, another describes the deal size or sector). Treat these as duplicates and pick only ONE. For example "R12-billion fintech makes acquisition" and "Yoco acquires AI startup" may be the same event.
+- Avoid same-theme clustering: do not pick two M&A stories, two rate-hike stories, or two of the same topic.
 - Write in English, unless the source article is clearly in French.
-- Keep the exact URLs from the articles above in your output.
-- Priority markets: South Africa, Zimbabwe, France, Europe get 3-4 stories total. Botswana, Malawi, Zambia, Tanzania, Mozambique share 1-2 stories total only if genuinely significant.
+- Keep the exact URLs from the articles above.
+- Priority markets: South Africa, Zimbabwe, France, Europe get 3-4 stories total. Botswana, Malawi, Zambia, Tanzania, Mozambique share 1-2 only if genuinely significant.
 - Do NOT output a digest header line at the top.
-- Each Top Story title must include the country. Format: [Country]: [Punchy title]
-- Each Quick Hit must start with the country. Format: [Country]: [One punchy sentence]
-- KEY TAKEAWAY must be one sharp specific sentence summarising the most important pattern from today's stories. It must not be empty.
-- Context: 1 sentence max. News: 2 sentences max. Impact: 3 sentences max. Be concise.
+
+SHARPNESS RULES (critical - this is what makes the digest valuable):
+- CONTEXT (1-2 sentences): Give BOTH the macro backdrop (the broader market/regulatory trend) AND the micro setup (the specific situation this company/sector was in). Not vague generalities.
+- NEWS (2 sentences): State the HARD FACTS. Always name the specific company, the exact amount (R-value, $-value, %), the named parties, and dates. No abstractions like "a major fintech" if the name is known - use the name.
+- IMPACT (3 sentences): Be analytical and forward-looking. Sentence 1: what this SIGNALS about the market. Sentence 2: what is likely to FOLLOW (second-order effects, who reacts next). Sentence 3: the specific implication for payments/merchant/SME players in the region.
+- Each Top Story title must include the country and be specific. Format: [Country]: [Specific punchy title with names/numbers where possible]
+- Quick Hits (1 sentence each): lead with the country, name the company and the key number. Format: [Country]: [Specific punchy sentence]
+- KEY TAKEAWAY: one sharp sentence naming the single most important pattern across today's stories. Must reference specifics, not "consolidation is happening".
 
 Format EXACTLY like this:
 
 💡 KEY TAKEAWAY
-[One sharp specific sentence]
+[One sharp specific sentence with names/specifics]
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -234,24 +237,24 @@ Format EXACTLY like this:
 
 ═══════════════════════════════════
 
-📌 [Country]: [Punchy title]
+📌 [Country]: [Specific punchy title]
 📅 [Date]  |  🔗 [URL]
 
 🌍 Context
-[1 sentence]
+[Macro trend + micro setup]
 
 📰 News
-[2 sentences]
+[Hard facts: company, amount, parties, date]
 
 ⚡ Impact
-[3 sentences]
+[What it signals + what follows + regional implication]
 
 ───────────────────────────────────
 
 ▋SECTION 2 — QUICK HITS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-• [Country]: [One punchy sentence]  🔗 [URL]
+• [Country]: [Specific punchy sentence]  🔗 [URL]
 
 ───────────────────────────────────`
     }]
