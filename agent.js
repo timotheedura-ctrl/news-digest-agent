@@ -44,9 +44,33 @@ const EMAIL_FROM = 'onboarding@resend.dev';
 function isRecent(pubDate) {
   if (!pubDate) return false;
   const articleDate = new Date(pubDate);
-  const threeDaysAgo = new Date();
-  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-  return articleDate >= threeDaysAgo;
+  const oneDayAgo = new Date();
+  oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+  return articleDate >= oneDayAgo;
+}
+
+// Deduplicate articles by normalising titles and removing near-duplicates
+function deduplicateArticles(articles) {
+  const seen = new Set();
+  const result = [];
+
+  for (const article of articles) {
+    // Normalise: lowercase, remove punctuation, keep first 6 words as fingerprint
+    const fingerprint = article.title
+      .toLowerCase()
+      .replace(/[^a-z0-9 ]/g, '')
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 6)
+      .join(' ');
+
+    if (!seen.has(fingerprint)) {
+      seen.add(fingerprint);
+      result.push(article);
+    }
+  }
+
+  return result;
 }
 
 function buildFeeds() {
@@ -84,8 +108,9 @@ async function fetchHeadlines() {
     }
   }
 
-  console.log(`✅ ${articles.length} recent articles found\n`);
-  return articles;
+  const deduplicated = deduplicateArticles(articles);
+  console.log(`✅ ${articles.length} articles fetched, ${deduplicated.length} after deduplication\n`);
+  return deduplicated;
 }
 
 function articlesToText(articles) {
@@ -181,12 +206,13 @@ async function runAgent() {
       role: 'user',
       content: `You are a news monitoring agent for a senior fintech professional working across the SADC region.
 
-Here are recent articles (last 3 days):
+Here are recent articles (last 24 hours only):
 ${articlesToText(articles)}
 
 Instructions:
 - Select exactly 5 stories for Section 1 and exactly 5 stories for Section 2. Total: 10 stories, no duplicates.
-- Each story must be DIFFERENT. Do not repeat any story or URL.
+- Each story must be DIFFERENT. Do not repeat any story, URL, or company.
+- If two articles are about the same company or event, pick only one.
 - Write in English, unless the source article is clearly in French.
 - Keep the exact URLs from the articles above in your output.
 - Priority markets: South Africa, Zimbabwe, France, Europe get 3-4 stories total. Botswana, Malawi, Zambia, Tanzania, Mozambique share 1-2 stories total only if genuinely significant.
