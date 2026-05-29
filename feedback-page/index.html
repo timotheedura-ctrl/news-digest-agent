@@ -39,12 +39,12 @@
   <script>
     const SUPABASE_URL = 'https://omrpframhlocywynemtz.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tcnBmcmFtaGxvY3l3eW5lbXR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzMwODgsImV4cCI6MjA5NTU0OTA4OH0.AdBBeo8HLr8a11EaafhX2Odb2fNP3PTQVw2eTI6zY7o';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const content = document.getElementById('content');
 
     async function loadStories() {
       const today = new Date().toISOString().split('T')[0];
-      const { data, error } = await supabase.from('sent_articles').select('*').eq('sent_date', today).order('id', { ascending: true });
+      const { data, error } = await db.from('sent_articles').select('*').eq('sent_date', today).order('id', { ascending: true });
       if (error) { content.innerHTML = '<div class="empty">Could not load stories. ' + error.message + '</div>'; return; }
       if (!data || data.length === 0) { content.innerHTML = '<div class="empty">No stories found for today yet. Check back after the morning digest.</div>'; return; }
       content.innerHTML = data.map(story => `
@@ -67,13 +67,13 @@
       const group = btn.parentElement;
       group.querySelectorAll('.btn').forEach(b => b.classList.remove('active-up', 'active-down'));
       btn.classList.add(rating === 'up' ? 'active-up' : 'active-down');
-      const { error } = await supabase.from('feedback').insert({ title, country, rating, too_vague: false });
+      const { error } = await db.from('feedback').insert({ title, country, rating, too_vague: false });
       document.getElementById('note-' + id).textContent = error ? '⚠️ ' + error.message : '✓ Saved';
     }
 
     async function flagVague(btn, id, title, country) {
       btn.classList.toggle('active-vague');
-      const { error } = await supabase.from('feedback').insert({ title, country, rating: null, too_vague: true });
+      const { error } = await db.from('feedback').insert({ title, country, rating: null, too_vague: true });
       document.getElementById('note-' + id).textContent = error ? '⚠️ ' + error.message : '✓ Flagged';
     }
 
