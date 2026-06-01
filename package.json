@@ -20,6 +20,7 @@
   "homepage": "https://github.com/timotheedura-ctrl/news-digest-agent#readme",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.99.0",
+    "@supabase/supabase-js": "^2.106.2",
     "dotenv": "^17.4.2",
     "follow-redirects": "^1.16.0",
     "resend": "^6.12.4",
