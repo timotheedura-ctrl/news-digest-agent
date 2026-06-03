@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rate Today's Digest</title>
+  <title>Rate the Digest</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -13,6 +13,9 @@
     .header p { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #475569; font-weight: 700; }
     .header h1 { font-size: 22px; margin-top: 6px; }
     .body { background: #fff; padding: 20px 28px; border-radius: 0 0 10px 10px; }
+    .date-picker { margin-bottom: 16px; }
+    .date-picker label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; display: block; margin-bottom: 6px; }
+    .date-picker select { width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #e2e8f0; border-radius: 6px; background: #fff; cursor: pointer; }
     .story { padding: 14px 0; border-bottom: 1px solid #f1f5f9; }
     .story-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
     .country-tag { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #3b82f6; margin-bottom: 4px; }
@@ -30,10 +33,16 @@
   <div class="container">
     <div class="header">
       <p>SADC Fintech Intelligence</p>
-      <h1>Rate Today's Digest</h1>
+      <h1>Rate the Digest</h1>
     </div>
-    <div class="body" id="content">
-      <div class="loading">Loading today's stories…</div>
+    <div class="body">
+      <div class="date-picker" id="datePicker" style="display:none;">
+        <label for="dateSelect">Which digest?</label>
+        <select id="dateSelect" onchange="loadStoriesForDate(this.value)"></select>
+      </div>
+      <div id="content">
+        <div class="loading">Loading digests…</div>
+      </div>
     </div>
   </div>
   <script>
@@ -41,12 +50,51 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tcnBmcmFtaGxvY3l3eW5lbXR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzMwODgsImV4cCI6MjA5NTU0OTA4OH0.AdBBeo8HLr8a11EaafhX2Odb2fNP3PTQVw2eTI6zY7o';
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const content = document.getElementById('content');
+    const datePicker = document.getElementById('datePicker');
+    const dateSelect = document.getElementById('dateSelect');
 
-    async function loadStories() {
+    function formatDateLabel(dateStr) {
+      const d = new Date(dateStr + 'T00:00:00');
       const today = new Date().toISOString().split('T')[0];
-      const { data, error } = await db.from('sent_articles').select('*').eq('sent_date', today).order('id', { ascending: true });
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+      const nice = d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+      if (dateStr === today) return 'Today — ' + nice;
+      if (dateStr === yesterday) return 'Yesterday — ' + nice;
+      return nice;
+    }
+
+    async function init() {
+      // Get the last 7 days of dates that have stories
+      const cutoff = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+      const { data, error } = await db
+        .from('sent_articles')
+        .select('sent_date')
+        .gte('sent_date', cutoff)
+        .order('sent_date', { ascending: false });
+
+      if (error) { content.innerHTML = '<div class="empty">Could not load. ' + error.message + '</div>'; return; }
+      if (!data || data.length === 0) { content.innerHTML = '<div class="empty">No digests found in the last 7 days.</div>'; return; }
+
+      // Unique dates, newest first
+      const dates = [...new Set(data.map(r => r.sent_date))];
+      dateSelect.innerHTML = dates.map(d => `<option value="${d}">${formatDateLabel(d)}</option>`).join('');
+      datePicker.style.display = 'block';
+
+      // Load the most recent by default
+      loadStoriesForDate(dates[0]);
+    }
+
+    async function loadStoriesForDate(dateStr) {
+      content.innerHTML = '<div class="loading">Loading stories…</div>';
+      const { data, error } = await db
+        .from('sent_articles')
+        .select('*')
+        .eq('sent_date', dateStr)
+        .order('id', { ascending: true });
+
       if (error) { content.innerHTML = '<div class="empty">Could not load stories. ' + error.message + '</div>'; return; }
-      if (!data || data.length === 0) { content.innerHTML = '<div class="empty">No stories found for today yet. Check back after the morning digest.</div>'; return; }
+      if (!data || data.length === 0) { content.innerHTML = '<div class="empty">No stories for this date.</div>'; return; }
+
       content.innerHTML = data.map(story => `
         <div class="story" data-id="${story.id}">
           ${story.country ? `<div class="country-tag">${story.country}</div>` : ''}
@@ -77,7 +125,7 @@
       document.getElementById('note-' + id).textContent = error ? '⚠️ ' + error.message : '✓ Flagged';
     }
 
-    loadStories();
+    init();
   </script>
 </body>
 </html>
