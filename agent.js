@@ -351,16 +351,18 @@ ${feedbackGuidance}
 SELECTION RULES:
 - Select exactly 5 stories for Section 1 and exactly 5 stories for Section 2. Total: 10, no duplicates.
 - Some articles describe the SAME real-world event with different headlines (e.g. one names the company, another describes the deal size or sector). Treat these as duplicates and pick only ONE. For example "R12-billion fintech makes acquisition" and "Yoco acquires AI startup" may be the same event.
+- A story used in Section 1 (Top Stories) must NOT also appear in Section 2 (Quick Hits). Each event appears ONCE in the whole digest, in one section only.
+- Each story's News and Impact text must be unique. Never repeat the same paragraph across two stories.
 - Avoid same-theme clustering: do not pick two M&A stories, two rate-hike stories, or two of the same topic.
 - Write in English, unless the source article is clearly in French.
 - Keep the exact URLs from the articles above.
 - Priority markets: South Africa, Zimbabwe, France, Europe get 3-4 stories total. Botswana, Malawi, Zambia, Tanzania, Mozambique share 1-2 only if genuinely significant.
 - Do NOT output a digest header line at the top.
 
-SHARPNESS RULES (critical - this is what makes the digest valuable):
-- CONTEXT (1-2 sentences): Give BOTH the macro backdrop (the broader market/regulatory trend) AND the micro setup (the specific situation this company/sector was in). Not vague generalities.
-- NEWS (2 sentences): State the HARD FACTS. Always name the specific company, the exact amount (R-value, $-value, %), the named parties, and dates. No abstractions like "a major fintech" if the name is known - use the name.
-- IMPACT (3 sentences): Be analytical and forward-looking. Sentence 1: what this SIGNALS about the market. Sentence 2: what is likely to FOLLOW (second-order effects, who reacts next). Sentence 3: the specific implication for payments/merchant/SME players in the region.
+SHARPNESS RULES (critical - this is what makes the digest valuable). Keep the three sections DISTINCT - they must not overlap or repeat each other:
+- CONTEXT (1 sentence): ONLY the macro backdrop of the country or sector - the broader market or regulatory trend this sits within. Do NOT describe the specific company or the news event here; that belongs in News.
+- NEWS (1-2 sentences): ONLY what is happening - the facts. Name the specific company, the exact amount (R-value, $-value, %), the named parties, and the date. No analysis here.
+- IMPACT (exactly 2 sentences, no more): Sentence 1 - what this SIGNALS about the market. Sentence 2 - what is likely to FOLLOW next (who reacts, second-order effect). Be concise. Do NOT repeat facts already stated in News.
 - Each Top Story title must include the country and be specific. Format: [Country]: [Specific punchy title with names/numbers where possible]
 - Quick Hits (1 sentence each): lead with the country, name the company and the key number. Format: [Country]: [Specific punchy sentence]
 - KEY TAKEAWAY: one sharp sentence naming the single most important pattern across today's stories. Must reference specifics, not "consolidation is happening".
@@ -381,13 +383,13 @@ Format EXACTLY like this:
 📅 [Date]  |  🔗 [URL]
 
 🌍 Context
-[Macro trend + micro setup]
+[Macro backdrop of country/sector only]
 
 📰 News
-[Hard facts: company, amount, parties, date]
+[The facts: company, amount, parties, date]
 
 ⚡ Impact
-[What it signals + what follows + regional implication]
+[What it signals + what follows - 2 sentences]
 
 ───────────────────────────────────
 
